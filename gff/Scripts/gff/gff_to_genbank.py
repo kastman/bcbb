@@ -17,7 +17,8 @@ def main(gff_file, fasta_file):
     out_file = "%s.gb" % os.path.splitext(gff_file)[0]
     fasta_input = SeqIO.to_dict(SeqIO.parse(fasta_file, "fasta", generic_dna))
     gff_iter = GFF.parse(gff_file, fasta_input)
-    SeqIO.write(_check_gff(_fix_ncbi_id(gff_iter)), out_file, "genbank")
+    gff_records = _check_gff(_fix_ncbi_id(gff_iter))
+    SeqIO.write(gff_records, out_file, "genbank")
 
 def _fix_ncbi_id(fasta_iter):
     """GenBank identifiers can only be 16 characters; try to shorten NCBI.
@@ -28,6 +29,13 @@ def _fix_ncbi_id(fasta_iter):
             print "Warning: shortening NCBI name %s to %s" % (rec.id, new_id)
             rec.id = new_id
             rec.name = new_id
+        elif len(rec.name) > 16:
+            # new_id = [x for x in rec.name[:16] if x][-1]
+            new_id = 'contig_%s' % rec.name.split('_')[-1]
+            print "Warning: shortening NCBI name %s to %s" % (rec.id, new_id)
+            rec.id = new_id
+            rec.name = new_id
+        print rec.id
         yield rec
 
 def _check_gff(gff_iterator):
